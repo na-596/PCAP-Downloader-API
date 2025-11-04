@@ -1,0 +1,14 @@
+# Minimal public requirements for the GUI-only package.
+# Pin versions as needed before publishing.
+customtkinter
+requests
+python-dotenv
+urllib3
+dpkt
+boto3
+botocore
+
+# The project referenced private packages in the original repository.
+# If you need the serverless helper or post-processors, vendor them or keep them as optional.
+# serverless_api_common  # PRIVATE: not included here
+# post_processors       # PRIVATE: not included here

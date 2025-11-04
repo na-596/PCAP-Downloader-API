@@ -1,26 +1,43 @@
-PCAP Downloader — Publish package (publish-only subset)
+# PCAP Downloader — Publish package (publish-only subset)
 
-This folder contains a sanitized, publish-only subset of a larger PCAP analysis project. The goal is to provide the core utilities needed to query session metadata (via Athena), fetch session PCAP data from configured collectors, and filter SCTP packets containing Diameter or other identifiers.
+This folder contains a sanitized, publish-only subset of a larger PCAP analysis project. The goal is to provide the core utilities and demonstrate building full-stack, API/service integration and advanced networking principles.
 
-Key contents
-- GUI: a lightweight interface and helpers (`gui.py`, `main_script.py`, `gui.py`).
-- Athena helper: `athena_query.py` (wraps Athena/SQL queries used to find related identifiers).
-- PCAP helpers: `merge.py` and `sctp_search_athena.py` (merge and filter PCAPs; the latter is the SCTP/Diameter-focused filter).
-- `requirements.txt` lists the public Python packages needed.
-- `.env.example` documents configuration variables (do not commit real secrets).
+---
 
-What the code (publish subset) can do
-- Look up MSISDN/IMSI/IP information for a given ICCID using Athena (via `execute_athena_query`).
-- Build safe queries against allowed collector endpoints and estimate data volume (CSV summary) before downloading any PCAPs.
-- Download PCAP files into memory, parse SCTP packets, and heuristically extract Diameter request/response pairs and other payload matches (including TBCD-encoded numeric identifiers).
-- Write a filtered PCAP containing only the matched packets.
+## Operation Status Note
 
-sctp_search_athena.py — quick overview
-- Purpose: given an ICCID and a time range, find PCAP sessions that contain relevant SCTP/Diameter traffic and save the filtered packets to a new PCAP.
-- Inputs: iccid, start_time, stop_time (format: YYYY/MM/DD HH:MM:SS), max_process_size (bytes), output filename.
-- Main steps:
-  1. Query Athena for related identifiers (msisdn, imsi, ip, and a codeword/dcname).
-  2. Combine Athena results with publish-only config (`IP_EXPRESSIONS` and `ALLOWED_CODEWORDS`).
-  3. For each allowed (codeword, expression): fetch a CSV summary to estimate size.
-  4. If size is acceptable, download the PCAP, parse in-memory, and filter SCTP/Diameter payloads using simple heuristics (raw substring, TBCD encoding, Diameter header parsing).
-  5. Correlate Diameter requests and responses by end-to-end identifiers to include matching responses where appropriate.
+The **Graphical User Interface (`gui.py`) will still launch and run** using `customtkinter`, demonstrating the application's client-side structure and responsiveness. However, its core functions—querying Athena, fetching portfolio tokens, and downloading data from ElasticSearch—will **obviously fail** because all required authentication tokens and endpoints have been intentionally removed and replaced with placeholder environment variables.
+
+---
+
+## Project Core Concept
+
+This application is designed to efficiently **retrieve, merge, and filter** raw network packet capture (PCAP) data associated with a specific device (identified by **ICCID**) over a user-defined time window.
+
+### The Pipeline:
+1.  **Identifier Lookup (Athena/External API):** Use the ICCID to query a cloud data warehouse (AWS Athena via `boto3`) and an external service (via `requests`) to retrieve associated metadata, such as MSISDN, IMSI, and relevant service IP addresses, over the specified time window.
+2.  **PCAP Retrieval (ElasticSearch):** Use the retrieved IPs and service identifiers to query a remote ElasticSearch-hosted collector to fetch multiple raw PCAP files.
+3.  **Local Analysis and Merge:** Download the PCAPs into memory (`io.BytesIO`), then use `dpkt` to parse the packets and apply a custom filtering heuristic.
+4.  **Output:** Generate a single, merged, time-sorted PCAP file containing only the packets relevant to the user's request.
+
+---
+
+## ⚙️ Key Functionality and Components
+
+| File | Description | Technologies Demonstrated |
+| :--- | :--- | :--- |
+| `gui.py` | **Graphical User Interface (GUI)** built with `customtkinter`. It redirects terminal output into the UI text widget, offers time window presets, and executes the search/merge process on a background thread to maintain responsiveness. | `customtkinter`, `threading` |
+| `main_script.py` | **Core Execution Flow.** Orchestrates Athena query, fetches necessary ElasticSearch URLs, checks the estimated file size via concurrent CSV fetching, downloads PCAPs concurrently, and manages the final merge process. | `requests`, `threading`, `urllib.parse`, `HTTPDigestAuth` |
+| `merge.py` | **Low-Level Packet Analysis.** Implements packet merging, time-sorting, IP filtering, byte-level filtering, and special correlation logic for **RADIUS (UDP) request/response pairs**. | `dpkt`, `socket` |
+| `sctp_search_athena.py` | **SCTP/Diameter-Specific Filtering.** Contains logic for **Diameter header parsing**, **TBCD (telephony BCD) encoding/matching**, and uses a thread pool to concurrently process data from various collector endpoints. | `dpkt`, `Diameter Protocol Parsing`, `concurrent.futures` |
+| `athena_query.py` | **Cloud Data Retrieval.** Handles the parameterized construction and polling execution of the AWS Athena SQL query using `boto3`. It retrieves the device identifiers required for PCAP searching. | `boto3`, `botocore`, `SQL` |
+
+---
+
+## 🚀 Environment Setup
+
+### Requirements
+The key public dependencies can be installed via the following:
+
+```bash
+pip install -r requirements.txt

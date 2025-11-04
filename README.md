@@ -6,7 +6,7 @@ This folder contains a sanitized, publish-only subset of a larger PCAP analysis 
 
 ## Operation Status Note
 
-The **Graphical User Interface (`gui.py`) will still launch and run** using `customtkinter`, demonstrating the application's client-side structure and responsiveness. However, its core functions—querying Athena, fetching portfolio tokens, and downloading data from ElasticSearch—will **obviously fail** because all required authentication tokens and endpoints have been intentionally removed and replaced with placeholder environment variables.
+The **Graphical User Interface (`gui.py`) will still launch and run** using `customtkinter`, demonstrating the application's client-side structure and responsiveness. However, its core functions, querying Athena, fetching portfolio tokens, and downloading data from ElasticSearch, will obviously fail because all required authentication tokens and endpoints have been intentionally removed and replaced with placeholder environment variables.
 
 ---
 
@@ -28,8 +28,8 @@ This application is designed to efficiently **retrieve, merge, and filter** raw 
 | :--- | :--- | :--- |
 | `gui.py` | **Graphical User Interface (GUI)** built with `customtkinter`. It redirects terminal output into the UI text widget, offers time window presets, and executes the search/merge process on a background thread to maintain responsiveness. | `customtkinter`, `threading` |
 | `main_script.py` | **Core Execution Flow.** Orchestrates Athena query, fetches necessary ElasticSearch URLs, checks the estimated file size via concurrent CSV fetching, downloads PCAPs concurrently, and manages the final merge process. | `requests`, `threading`, `urllib.parse`, `HTTPDigestAuth` |
-| `merge.py` | **Low-Level Packet Analysis.** Implements packet merging, time-sorting, IP filtering, byte-level filtering, and special correlation logic for **RADIUS (UDP) request/response pairs**. | `dpkt`, `socket` |
-| `sctp_search_athena.py` | **SCTP/Diameter-Specific Filtering.** Contains logic for **Diameter header parsing**, **TBCD (telephony BCD) encoding/matching**, and uses a thread pool to concurrently process data from various collector endpoints. | `dpkt`, `Diameter Protocol Parsing`, `concurrent.futures` |
+| `merge.py` | **Low-Level Packet Analysis.** Implements packet merging, time-sorting, IP filtering, byte-level filtering, and special correlation logic for RADIUS (UDP) request/response pairs. | `dpkt`, `socket` |
+| `sctp_search_athena.py` | **SCTP/Diameter-Specific Filtering.** Contains logic for Diameter header parsing, TBCD (telephony BCD) encoding/matching, and uses a thread pool to concurrently process data from various collector endpoints. | `dpkt`, `Diameter Protocol Parsing`, `concurrent.futures` |
 | `athena_query.py` | **Cloud Data Retrieval.** Handles the parameterized construction and polling execution of the AWS Athena SQL query using `boto3`. It retrieves the device identifiers required for PCAP searching. | `boto3`, `botocore`, `SQL` |
 
 ---
@@ -41,3 +41,4 @@ The key public dependencies can be installed via the following:
 
 ```bash
 pip install -r requirements.txt
+
